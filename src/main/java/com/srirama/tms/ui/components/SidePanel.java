@@ -25,7 +25,7 @@ public class SidePanel extends JPanel {
         setPreferredSize(new Dimension(150, 0));
         setBackground(new Color(230, 235, 245));
 
-        String[] buttonLabels = {"Export", "Save", "Print", "Settings", "Configure"};
+        String[] buttonLabels = {"Export", "DataTable", "Print", "Settings", "Configure"};
         for (String label : buttonLabels) {
             add(createButton(label));
         }
