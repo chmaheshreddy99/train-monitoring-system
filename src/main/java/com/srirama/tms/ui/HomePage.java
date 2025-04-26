@@ -37,7 +37,7 @@ public class HomePage extends JFrame {
     }
 
     private void initializeComponents() {
-        setJMenuBar(MenuBarBuilder.buildMenuBar());
+        setJMenuBar(MenuBarBuilder.buildMenuBar(this));
 
         cardPanel = new CardPanel();
         dataTablePanel = cardPanel.getDataTablePanel(); // <-- Get DataTablePanel reference
