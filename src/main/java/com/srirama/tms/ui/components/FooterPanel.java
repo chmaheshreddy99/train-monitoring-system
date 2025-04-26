@@ -17,7 +17,7 @@ public class FooterPanel extends JPanel {
         setBackground(new Color(75, 85, 99));
         setPreferredSize(new Dimension(0, 30));
 
-        JLabel label = new JLabel("© 2025 My Application");
+        JLabel label = new JLabel("© 2025 Sriram Aditya IT Solutions Pvt. Ltd. All rights reserved.");
         label.setForeground(Color.WHITE);
         setBorder(new EmptyBorder(5, 10, 5, 10));
         add(label);

@@ -5,6 +5,7 @@ import java.awt.BorderLayout;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
 import com.srirama.tms.ui.components.CardPanel;
 import com.srirama.tms.ui.components.FooterPanel;
@@ -23,7 +24,7 @@ public class HomePage extends JFrame {
     }
 
     private void initializeFrame() {
-        setTitle("Home Page - Swing App");
+        setTitle("Train Monitoring System.");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1378, 768);
         setLocationRelativeTo(null);
@@ -48,6 +49,11 @@ public class HomePage extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
+        	try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
             new HomePage().setVisible(true);
         });
     }
