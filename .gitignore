@@ -17,6 +17,7 @@ gradle/wrapper/gradle-wrapper.properties
 .project
 .classpath
 .settings/
+bin
 
 # NetBeans
 nbproject/private/
@@ -44,3 +45,8 @@ Thumbs.db
 
 # Java Files
 *.class
+
+# Application
+db_metadata
+db_tables
+
