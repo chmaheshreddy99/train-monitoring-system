@@ -4,9 +4,7 @@ import java.awt.BorderLayout;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
 import javax.swing.Timer;
-import javax.swing.UIManager;
 
 import com.srirama.tms.ui.components.CardPanel;
 import com.srirama.tms.ui.components.DataTablePanel;
@@ -73,16 +71,5 @@ public class HomePage extends JFrame {
             dataTablePanel.addRow(rowData);
         });
         timer.start();
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-            new HomePage().setVisible(true);
-        });
     }
 }
