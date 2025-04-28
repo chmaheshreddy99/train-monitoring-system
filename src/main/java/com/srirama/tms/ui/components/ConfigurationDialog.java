@@ -59,8 +59,10 @@ public class ConfigurationDialog extends JDialog {
         splitPane.setDividerLocation(400);
 
         JPanel bottomButtons = new JPanel();
-        JButton okButton = new JButton("OK");
-        JButton cancelButton = new JButton("Cancel");
+        JButton okButton = new JButton(AppIcon.getIcon("/ui/icons/icons8-save-20.png"));
+        okButton.setToolTipText("Save");
+        JButton cancelButton = new JButton(AppIcon.getIcon("/ui/icons/icons8-exit-20.png"));
+        cancelButton.setToolTipText("Cancel");
 
         okButton.addActionListener(e -> onSave());
         cancelButton.addActionListener(e -> onCancel());

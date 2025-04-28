@@ -6,6 +6,8 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 
+import org.springframework.stereotype.Component;
+
 import com.srirama.tms.ui.components.CardPanel;
 import com.srirama.tms.ui.components.DataTablePanel;
 import com.srirama.tms.ui.components.FooterPanel;
@@ -13,6 +15,7 @@ import com.srirama.tms.ui.components.HeaderPanel;
 import com.srirama.tms.ui.components.MenuBarBuilder;
 import com.srirama.tms.ui.components.SidePanel;
 
+@Component
 public class HomePage extends JFrame {
 
     private static final long serialVersionUID = 2696909680742711072L;
@@ -47,7 +50,7 @@ public class HomePage extends JFrame {
 
         JPanel centerPanel = new JPanel(new BorderLayout());
         centerPanel.add(cardPanel, BorderLayout.CENTER);
-        centerPanel.add(sidePanel, BorderLayout.EAST);
+        centerPanel.add(sidePanel, BorderLayout.EAST);	
 
         add(centerPanel, BorderLayout.CENTER);
     }
@@ -63,7 +66,7 @@ public class HomePage extends JFrame {
     }
 
     private void startAutoDataFeed() {
-        Timer timer = new Timer(200, e -> {  // every 2 seconds
+        Timer timer = new Timer(20, e -> {  // every 2 seconds
             Object[] rowData = new Object[20];
             for (int col = 0; col < 20; col++) {
                 rowData[col] = "Auto " + System.currentTimeMillis() % 100000 + "-" + (col + 1);

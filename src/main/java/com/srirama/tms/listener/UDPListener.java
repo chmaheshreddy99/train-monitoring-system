@@ -44,11 +44,7 @@ public class UDPListener {
 				String hexPayload = bytesToHex(data);
 
 				if (verifyChecksum(hexPayload)) {
-					if (!queue.offer(hexPayload)) {
-						logger.warn("Queue full, dropping packet: {}", hexPayload);
-					} else {
-						logger.debug("Accepted packet: {}", hexPayload);
-					}
+					queue.put(hexPayload);
 				} else {
 					logger.warn("Invalid checksum, discarded packet: {}", hexPayload);
 				}
