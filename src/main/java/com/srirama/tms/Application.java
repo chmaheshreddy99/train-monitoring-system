@@ -17,6 +17,7 @@ public class Application {
 				ex.printStackTrace();
 			}
 			HomePage homePage = SpringBeanInjector.getApplicationContext().getBean(HomePage.class);
+			homePage.init();
 			homePage.setVisible(true);
 			homePage.setIconImage(AppIcon.getIcon());
 		});

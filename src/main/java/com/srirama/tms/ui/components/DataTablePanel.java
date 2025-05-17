@@ -2,81 +2,108 @@ package com.srirama.tms.ui.components;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.swing.JPanel;
+import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
+import javax.swing.event.ChangeEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
-import javax.swing.JScrollBar;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ChangeEvent;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.srirama.tms.dependencyijnection.SpringBeanInjector;
+import com.srirama.tms.service.DataConsumerService;
 
 public class DataTablePanel extends JPanel {
 
     private static final long serialVersionUID = -6245981872628229928L;
-    
+
     private JTable table;
     private DefaultTableModel tableModel;
     private JScrollPane scrollPane;
     private boolean isUserAdjustingVerticalScrollBar = false;
-    private static final int COLUMN_WIDTH_PIXELS = 113; // Approx. 3cm at 96 DPI
+    private static final int COLUMN_WIDTH_PIXELS = 113;
+
+    @Autowired
+    private DataConsumerService dataConsumerService;
+
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     public DataTablePanel() {
+        SpringBeanInjector.inject(this);
         setLayout(new BorderLayout());
 
-        // Initialize the table with 20 columns and 0 initial rows
+        // Column setup
         String[] columnNames = new String[20];
         for (int i = 0; i < 20; i++) {
             columnNames[i] = "Column " + (i + 1);
         }
 
-        tableModel = new DefaultTableModel(columnNames, 0);  // No rows initially
+        tableModel = new DefaultTableModel(columnNames, 0);
         table = new JTable(tableModel);
+        styleTable();
 
-        // Set up table appearance
+        scrollPane = new JScrollPane(table);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        add(scrollPane, BorderLayout.CENTER);
+
+        JScrollBar verticalScrollBar = scrollPane.getVerticalScrollBar();
+        verticalScrollBar.getModel().addChangeListener((ChangeEvent e) -> {
+            isUserAdjustingVerticalScrollBar = verticalScrollBar.getValueIsAdjusting();
+        });
+
+        startAutoDataFeed();
+    }
+
+    private void styleTable() {
         table.setBackground(Color.BLACK);
         table.setForeground(Color.GREEN);
         table.setGridColor(Color.GRAY);
         table.setSelectionBackground(Color.DARK_GRAY);
-
-        // Disable auto-resize to allow horizontal scrolling
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
-        // Set fixed column width (approx. 3cm)
         for (int i = 0; i < table.getColumnCount(); i++) {
             TableColumn column = table.getColumnModel().getColumn(i);
             column.setPreferredWidth(COLUMN_WIDTH_PIXELS);
             column.setWidth(COLUMN_WIDTH_PIXELS);
         }
-
-        scrollPane = new JScrollPane(table);
-        // Ensure horizontal scrollbar is always available if needed
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        add(scrollPane, BorderLayout.CENTER);  // Add scrollable table to panel
-
-        // Add listener to track user interaction with the vertical scrollbar
-        JScrollBar verticalScrollBar = scrollPane.getVerticalScrollBar();
-        verticalScrollBar.getModel().addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                isUserAdjustingVerticalScrollBar = verticalScrollBar.getValueIsAdjusting();
-            }
-        });
     }
 
-    public void addRow(Object[] rowData) {
+    private void addRow(Object[] rowData) {
         tableModel.addRow(rowData);
-
-        // Auto-scroll vertically to the bottom only if the user is not adjusting the vertical scrollbar
         if (!isUserAdjustingVerticalScrollBar) {
             scrollToBottom();
         }
-        // No action taken on horizontal scrollbar to preserve user position
     }
 
     private void scrollToBottom() {
         JScrollBar verticalScrollBar = scrollPane.getVerticalScrollBar();
         verticalScrollBar.setValue(verticalScrollBar.getMaximum());
+    }
+
+    private void startAutoDataFeed() {
+        Timer timer = new Timer(200, e -> fetchAndAddRowAsync());
+        timer.start();
+    }
+
+    private void fetchAndAddRowAsync() {
+        executor.submit(() -> {
+            try {
+                String[] data = dataConsumerService.fetchData();
+                if (data != null && data.length > 0) {
+                	for(String t : data) {
+                		SwingUtilities.invokeLater(() -> addRow(t.split("\\|")));
+                	}
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace(); // or use proper logging
+            }
+        });
     }
 }

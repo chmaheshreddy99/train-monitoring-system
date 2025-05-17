@@ -5,6 +5,9 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketTimeoutException;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
 /**
  * The {@code UDPConnector} class provides a simple interface for sending and receiving
  * messages over UDP (User Datagram Protocol).
@@ -22,35 +25,17 @@ import java.net.SocketTimeoutException;
  *
  * @author
  */
+@Service
 public class UDPConnector {
 
-    private final String host;
-    private final int port;
-    private final int timeoutMillis;
-
-    /**
-     * Constructs a {@code UDPConnector} with the specified host and port.
-     * Uses a default timeout of 5000 milliseconds.
-     *
-     * @param host the target host to connect to
-     * @param port the target port to connect to
-     */
-    public UDPConnector(String host, int port) {
-        this(host, port, 5000);
-    }
-
-    /**
-     * Constructs a {@code UDPConnector} with the specified host, port, and timeout.
-     *
-     * @param host         the target host to connect to
-     * @param port         the target port to connect to
-     * @param timeoutMillis the timeout in milliseconds for receiving a response
-     */
-    public UDPConnector(String host, int port, int timeoutMillis) {
-        this.host = host;
-        this.port = port;
-        this.timeoutMillis = timeoutMillis;
-    }
+	@Value("${upd.host:localhost}")
+    private String host;
+	
+	@Value("${upd.port:9002}")
+    private int port;
+	
+	@Value("${upd.timeout:5000}")
+    private int timeoutMillis;
 
     /**
      * Sends a message to the specified host and port over UDP and waits for a response.
@@ -69,7 +54,7 @@ public class UDPConnector {
             DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, address, port);
             socket.send(sendPacket);
 
-            byte[] buffer = new byte[4096]; // 4KB buffer for receiving
+            byte[] buffer = new byte[4096];
             DatagramPacket receivePacket = new DatagramPacket(buffer, buffer.length);
 
             socket.receive(receivePacket);

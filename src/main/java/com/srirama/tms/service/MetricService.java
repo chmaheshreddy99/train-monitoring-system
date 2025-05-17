@@ -48,6 +48,18 @@ public class MetricService {
 
 	    metricParameterPreferencesRepository.saveAll(preferences);
 	}
+	
+	public boolean send(List<MetricParameter> metricParameters) {
+		System.out.println("sending.....");
+		try {
+			Thread.sleep(5000);
+			return true;
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		}
+	}
 
 
 }

@@ -64,7 +64,7 @@ public class ConfigurationDialog extends JDialog {
         cancelButton.setToolTipText("Cancel");
 
         okButton.addActionListener(e -> onSave());
-        cancelButton.addActionListener(e -> onCancel());
+        cancelButton.addActionListener(e -> onSend());
 
         bottomButtons.add(okButton);
         bottomButtons.add(cancelButton);
@@ -179,9 +179,7 @@ public class ConfigurationDialog extends JDialog {
 	private void onSave() {
 		List<MetricParameter> selectedParameters = IntStream.range(0, selectedModel.size())
 				.mapToObj(selectedModel::getElementAt).toList();
-		
 		metricService.saveParameterPreferences(selectedParameters);
-		
 		dispose();
 	}
 
@@ -189,6 +187,13 @@ public class ConfigurationDialog extends JDialog {
     private void onCancel() {
         dispose();
     }
+    
+	private void onSend() {
+		List<MetricParameter> selectedParameters = IntStream.range(0, selectedModel.size())
+				.mapToObj(selectedModel::getElementAt).toList();
+		ProgressDialog progressDialog = new ProgressDialog(this, "Processing");
+		progressDialog.startBackgroundTask(() -> metricService.send(selectedParameters));
+	}
 
     public static void showDialog(Frame parent) {
         ConfigurationDialog dialog = new ConfigurationDialog(parent);
