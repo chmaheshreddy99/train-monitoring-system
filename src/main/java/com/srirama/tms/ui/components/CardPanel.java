@@ -14,6 +14,7 @@ public class CardPanel extends JPanel {
 	private static final long serialVersionUID = 7680550413109104907L;
 	
 	private CardLayout cardLayout;
+	
     private DataTablePanel dataTablePanel;
 
     public CardPanel() {

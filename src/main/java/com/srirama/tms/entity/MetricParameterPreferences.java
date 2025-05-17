@@ -1,5 +1,6 @@
 package com.srirama.tms.entity;
 
+import com.srirama.db.annotations.Id;
 import com.srirama.db.annotations.Table;
 
 import lombok.Getter;
@@ -12,10 +13,13 @@ import lombok.ToString;
 @ToString
 public class MetricParameterPreferences {
 	
+	@Id
 	private String name;
 	
 	private String description;
 	
 	private String metricParameterName;
+	
+	private String metricGroupName;
 
 }

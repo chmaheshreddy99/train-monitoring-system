@@ -2,11 +2,11 @@ package com.srirama.tms.dependencyijnection;
 
 import java.lang.reflect.Field;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import com.srirama.tms.config.ApplicationConfig;
-import com.srirama.tms.dependencyijnection.annotations.InjectSpringBean;
 
 public class SpringBeanInjector {
 
@@ -15,7 +15,7 @@ public class SpringBeanInjector {
 	public static void inject(Object target) {
 		Class<?> clazz = target.getClass();
 		for (Field field : clazz.getDeclaredFields()) {
-			if (field.isAnnotationPresent(InjectSpringBean.class)) {
+			if (field.isAnnotationPresent(Autowired.class)) {
 				Class<?> fieldType = field.getType();
 				Object bean = context.getBean(fieldType);
 				try {

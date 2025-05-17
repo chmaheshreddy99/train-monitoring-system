@@ -8,6 +8,9 @@ import com.srirama.db.entity.TableSchema;
 
 import java.lang.reflect.Field;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class EntityMapper {
 
     public static <T> TableSchema toSchema(Class<T> clazz) {
@@ -22,6 +25,9 @@ public class EntityMapper {
                 Column column = field.getAnnotation(Column.class);
                 schema.addColumn(column.name(), column.type());
             }
+            else {
+            	schema.addColumn(field.getName(), field.getType().getName());
+            }
         }
         return schema;
     }
@@ -31,11 +37,14 @@ public class EntityMapper {
             Class<?> clazz = entity.getClass();
             TableRecord record = new TableRecord();
             for (Field field : clazz.getDeclaredFields()) {
+                field.setAccessible(true);
+            	Object value = field.get(entity);
                 if (field.isAnnotationPresent(Column.class)) {
-                    field.setAccessible(true);
                     Column column = field.getAnnotation(Column.class);
-                    Object value = field.get(entity);
                     record.setField(column.name(), value != null ? value.toString() : "");
+                }
+                else {
+                	record.setField(field.getName(), value != null ? value.toString() : "");
                 }
             }
             return record;

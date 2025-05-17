@@ -37,4 +37,9 @@ public class MetricParameter {
         this.description = description;
         this.dataType = dataType;
     }
+    
+    @Override
+    public String toString() {
+    	return name;
+    }
 }

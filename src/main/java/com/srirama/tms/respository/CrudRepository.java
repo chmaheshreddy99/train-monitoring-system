@@ -14,6 +14,10 @@ public interface CrudRepository<T> {
         getEntityManager().save(entity);
         return entity;
     }
+    
+    default void saveAll(List<T> entity) {
+        getEntityManager().saveAll(entity);
+    }
 
     default List<T> findAll() {
         return getEntityManager().findAll(getEntityClass());

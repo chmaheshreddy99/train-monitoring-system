@@ -10,6 +10,9 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class EntityManager {
 
     private final SchemaManager schemaManager;
@@ -40,6 +43,16 @@ public class EntityManager {
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to save entity", e);
+        }
+    }
+    
+    public <T> void saveAll(List<T> entities) {
+        if (entities == null || entities.isEmpty()) {
+            return;
+        }
+
+        for (T entity : entities) {
+            save(entity);
         }
     }
 
@@ -138,22 +151,27 @@ public class EntityManager {
         }
     }
 
-    // --- Helper Methods ---
-
     private <T> void mapRecordToEntity(TableRecord record, T entity) throws IllegalAccessException {
         Class<?> clazz = entity.getClass();
         for (Field field : clazz.getDeclaredFields()) {
-            if (field.isAnnotationPresent(com.srirama.db.annotations.Column.class)) {
-                field.setAccessible(true);
-                com.srirama.db.annotations.Column columnAnnotation = field.getAnnotation(com.srirama.db.annotations.Column.class);
-                String value = record.getField(columnAnnotation.name());
-                if (value != null) {
-                    Object converted = convert(field.getType(), value);
-                    field.set(entity, converted);
-                }
+            field.setAccessible(true);
+            String columnName = getColumnName(field);
+            String value = record.getField(columnName);
+            if (value != null) {
+                Object converted = convert(field.getType(), value);
+                field.set(entity, converted);
             }
         }
     }
+
+    private String getColumnName(Field field) {
+        if (field.isAnnotationPresent(com.srirama.db.annotations.Column.class)) {
+            com.srirama.db.annotations.Column columnAnnotation = field.getAnnotation(com.srirama.db.annotations.Column.class);
+            return columnAnnotation.name();
+        }
+        return field.getName();
+    }
+
 
     private void validateEntity(Class<?> clazz) {
         if (!clazz.isAnnotationPresent(com.srirama.db.annotations.Table.class)) {
