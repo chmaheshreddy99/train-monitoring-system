@@ -30,7 +30,7 @@ public class ComponentFactory {
 	 * @param <T>      Type of the class
 	 * @return Instance of the class
 	 */
-	public static <T> T createInstance(Class<T> clazz, Class<?>[] argTypes, Object[] args) {
+	public static <T> T createInstance(Class<T> clazz, Class<?>[] argTypes, Object ...args) {
 		try {
 			T instance = clazz.getDeclaredConstructor(argTypes).newInstance(args);
 			SpringBeanInjector.inject(instance);

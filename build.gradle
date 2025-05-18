@@ -19,6 +19,8 @@ dependencies {
     
     implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
     
+    implementation 'org.jfree:jfreechart:1.5.4'
+    
     compileOnly 'org.projectlombok:lombok:1.18.30'
     annotationProcessor 'org.projectlombok:lombok:1.18.30'
 }

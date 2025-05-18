@@ -18,7 +18,7 @@ public class DataConsumerService {
 
     private final String[] data = new String[DATA_SIZE];
 
-    public String[] fetchData() {
+    public synchronized String[] fetchData() {
         try {
             for (int i = 0; i < DATA_SIZE; i++) {
                 data[i] = udpListener.getPacketQueue().take();

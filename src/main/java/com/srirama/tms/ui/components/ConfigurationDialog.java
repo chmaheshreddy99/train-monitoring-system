@@ -1,6 +1,7 @@
 package com.srirama.tms.ui.components;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Frame;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -37,42 +38,90 @@ public class ConfigurationDialog extends JDialog {
     private DefaultListModel<MetricParameter> selectedModel;
     private DefaultTreeModel treeModel;
     private DefaultMutableTreeNode rootNode;
+    private DefaultListModel<String> savedConfigurationsModel;
     
     @Autowired
     private MetricService metricService;
 
     public ConfigurationDialog(Frame parent) {
-        super(parent, "Train Monitoring - Metric Configuration", true); // Modal
+        super(parent, "Train Monitoring - Metric Configuration", true);
         SpringBeanInjector.inject(this);
         initUI();
     }
 
     private void initUI() {
-        setSize(800, 600);
+        setSize(900, 600);
         setLocationRelativeTo(getParent());
 
         selectedModel = new DefaultListModel<>();
         selectedList = new JList<>(selectedModel);
+        savedConfigurationsModel = new DefaultListModel<>();
 
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, createLeftPane(), createRightPane());
-        splitPane.setDividerLocation(400);
+        JSplitPane innerSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, createLeftPane(), createRightPane());
+        innerSplitPane.setDividerLocation(350);
+
+        JSplitPane outerSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, createNewLeftPane(), innerSplitPane);
+        outerSplitPane.setDividerLocation(200);
 
         JPanel bottomButtons = new JPanel();
-        JButton okButton = new JButton(AppIcon.getIcon("/ui/icons/icons8-save-20.png"));
-        okButton.setToolTipText("Save");
+
+        JButton saveButton = new JButton(AppIcon.getIcon("/ui/icons/icons8-save-20.png"));
+        saveButton.setToolTipText("Save");
+        
         JButton cancelButton = new JButton(AppIcon.getIcon("/ui/icons/icons8-exit-20.png"));
         cancelButton.setToolTipText("Cancel");
+        
+        JButton sendButton = new JButton(AppIcon.getIcon("/ui/icons/icons8-ic-20.png"));
+        sendButton.setToolTipText("Send");
 
-        okButton.addActionListener(e -> onSave());
-        cancelButton.addActionListener(e -> onSend());
+        saveButton.addActionListener(e -> onSave());
+        sendButton.addActionListener(e -> onSend());
+        cancelButton.addActionListener(e -> onCancel());
 
-        bottomButtons.add(okButton);
+        bottomButtons.add(saveButton);
+        bottomButtons.add(sendButton);
         bottomButtons.add(cancelButton);
 
-        getContentPane().add(splitPane, BorderLayout.CENTER);
+        getContentPane().add(outerSplitPane, BorderLayout.CENTER);
         getContentPane().add(bottomButtons, BorderLayout.SOUTH);
-    }
 
+    }
+    
+    private JScrollPane createNewLeftPane() {
+    	populateDetailsModel();
+        JList<String> detailsList = new JList<>(savedConfigurationsModel);
+        detailsList.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+        
+        JScrollPane detailsScrollPane = new JScrollPane(detailsList);
+        detailsScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        detailsScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        detailsScrollPane.setBorder(BorderFactory.createTitledBorder("Available Configurations"));
+        
+		detailsList.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2) {
+					int index = detailsList.locationToIndex(e.getPoint());
+					if (index > 0) {
+						repopulateSelectedList(detailsList.getModel().getElementAt(index));
+					}
+				}
+			}
+		});
+
+        return detailsScrollPane;
+    }
+    
+    private void populateDetailsModel() {
+    	savedConfigurationsModel.clear();
+        metricService.getAllConfigNames().forEach(savedConfigurationsModel::addElement);
+    }
+    
+	private void repopulateSelectedList(String configName) {
+		selectedModel.clear();
+		selectedModel.addAll(metricService.getAllMetricParametersByConfigName(configName));
+	}
+    
     private JPanel createLeftPane() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createTitledBorder("Available Metrics"));
@@ -179,8 +228,11 @@ public class ConfigurationDialog extends JDialog {
 	private void onSave() {
 		List<MetricParameter> selectedParameters = IntStream.range(0, selectedModel.size())
 				.mapToObj(selectedModel::getElementAt).toList();
-		metricService.saveParameterPreferences(selectedParameters);
-		dispose();
+		new SaveConfigurationDialog(this, (preferenceName, u) -> {
+			metricService.saveParameterPreferences(selectedParameters, preferenceName);
+			populateDetailsModel();
+			u.accept(true);
+		});
 	}
 
 

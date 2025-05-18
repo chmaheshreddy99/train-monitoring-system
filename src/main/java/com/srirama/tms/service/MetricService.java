@@ -32,10 +32,8 @@ public class MetricService {
 				.toList();
 	}
 
-	public void saveParameterPreferences(List<MetricParameter> metricParameters) {
+	public void saveParameterPreferences(List<MetricParameter> metricParameters, String preferenceName) {
 	   
-		final String preferenceName = "Preference-1";
-
 	    List<MetricParameterPreferences> preferences = metricParameters.stream()
 	        .map(metric -> {
 	            MetricParameterPreferences preference = new MetricParameterPreferences();
@@ -50,7 +48,6 @@ public class MetricService {
 	}
 	
 	public boolean send(List<MetricParameter> metricParameters) {
-		System.out.println("sending.....");
 		try {
 			Thread.sleep(5000);
 			return true;
@@ -60,6 +57,20 @@ public class MetricService {
 			return false;
 		}
 	}
+	
+	public List<String> getAllConfigNames() {
+		return metricParameterPreferencesRepository.findAll()
+				.stream()
+				.map(s -> s.getName())
+				.distinct()
+				.toList();
+	}
+	
+	public List<MetricParameter> getAllMetricParametersByConfigName(String configName) {
 
-
+		return metricParameterPreferencesRepository.findByPreferenceName(configName)
+				.stream()
+				.map(metricParam -> metricParameterRepository.findById(metricParam.getMetricParameterName()))
+				.toList();
+	}
 }

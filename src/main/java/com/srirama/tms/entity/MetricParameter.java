@@ -42,4 +42,16 @@ public class MetricParameter {
     public String toString() {
     	return name;
     }
+    
+    @Override
+    public boolean equals(Object obj) {
+    	return name.equals(((MetricParameter)obj).getName());
+    }
+    
+    @Override
+    public int hashCode() {
+    	return name.hashCode();
+    }
+    
+
 }
