@@ -11,6 +11,7 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import javax.swing.Timer;
 
 public class SaveConfigurationDialog extends JDialog {
@@ -72,8 +73,9 @@ public class SaveConfigurationDialog extends JDialog {
 	private void showResult(boolean success) {
 		System.out.println("submit callback.....");
 		statusLabel =  new JLabel();
-		statusLabel.setText(success ? "✅ Operation successful!" : "❌ Operation failed.");
+		statusLabel.setText(success ? "✅ Configuration saved successfully!" : "❌ Unable to save configuration!");
 		getContentPane().removeAll();
+		statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		getContentPane().setLayout(new BorderLayout());
 		getContentPane().add(statusLabel, BorderLayout.CENTER);
 		getContentPane().revalidate();
@@ -84,7 +86,7 @@ public class SaveConfigurationDialog extends JDialog {
 	private void autoDispose() {
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		if (autoDispose) {
-			Timer timer = new Timer(2000, e -> dispose());
+			Timer timer = new Timer(3000, e -> dispose());
 			timer.setRepeats(false);
 			timer.start();
 		}

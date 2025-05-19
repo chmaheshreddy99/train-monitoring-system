@@ -25,6 +25,7 @@ import javax.swing.tree.TreeSelectionModel;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.srirama.tms.config.DataLoggerConfig;
 import com.srirama.tms.dependencyijnection.SpringBeanInjector;
 import com.srirama.tms.entity.MetricParameter;
 import com.srirama.tms.service.MetricService;
@@ -42,6 +43,9 @@ public class ConfigurationDialog extends JDialog {
     
     @Autowired
     private MetricService metricService;
+    
+    @Autowired
+    private DataLoggerConfig dataLoggerConfig;
 
     public ConfigurationDialog(Frame parent) {
         super(parent, "Train Monitoring - Metric Configuration", true);
@@ -139,7 +143,7 @@ public class ConfigurationDialog extends JDialog {
                     if (paths != null) {
                         for (TreePath path : paths) {
                             DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getLastPathComponent();
-                            if (node.isLeaf()) {
+                            if (node.getUserObject() instanceof MetricParameter) {
                                 moveSelectedToRight(node);
                             }
                         }
@@ -228,10 +232,10 @@ public class ConfigurationDialog extends JDialog {
 	private void onSave() {
 		List<MetricParameter> selectedParameters = IntStream.range(0, selectedModel.size())
 				.mapToObj(selectedModel::getElementAt).toList();
-		new SaveConfigurationDialog(this, (preferenceName, u) -> {
+		new SaveConfigurationDialog(this, (preferenceName, callback) -> {
 			metricService.saveParameterPreferences(selectedParameters, preferenceName);
 			populateDetailsModel();
-			u.accept(true);
+			callback.accept(true);
 		});
 	}
 
@@ -245,6 +249,8 @@ public class ConfigurationDialog extends JDialog {
 				.mapToObj(selectedModel::getElementAt).toList();
 		ProgressDialog progressDialog = new ProgressDialog(this, "Processing");
 		progressDialog.startBackgroundTask(() -> metricService.send(selectedParameters));
+		dataLoggerConfig.setSelectedMetricParams(selectedParameters);
+		dataLoggerConfig.setConfigChanged(true);
 	}
 
     public static void showDialog(Frame parent) {

@@ -3,6 +3,7 @@ package com.srirama.tms.ui.components;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -13,6 +14,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
 
 import org.jfree.chart.ChartFactory;
@@ -24,8 +26,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.srirama.tms.config.DataLoggerConfig;
 import com.srirama.tms.dependencyijnection.SpringBeanInjector;
 import com.srirama.tms.service.DataConsumerService;
+import com.srirama.tms.ui.HomePage;
 
 public class DataTablePanel extends JPanel {
 
@@ -41,6 +45,12 @@ public class DataTablePanel extends JPanel {
 
     @Autowired
     private DataConsumerService dataConsumerService;
+    
+    @Autowired
+    private DataLoggerConfig dataLoggerConfig;
+    
+    @Autowired
+    private HomePage homePage;
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
@@ -50,20 +60,17 @@ public class DataTablePanel extends JPanel {
     private final Set<Integer> selectedColumns = new HashSet<>();
     private final Map<Integer, List<Double>> columnDataMap = new HashMap<>();
     private JButton toggleGraphButton;
-    private boolean isGraphVisible = true;
+    private JButton toggleDataLoggerButton;
+    private JButton configureButton;
+    private boolean isGraphVisible = false;
+    private boolean isDataLoggerStarted;
 
     public DataTablePanel() {
         SpringBeanInjector.inject(this);
         setLayout(new BorderLayout());
-
-        String[] columnNames = new String[20];
-        for (int i = 0; i < 20; i++) {
-            columnNames[i] = "Column " + (i + 1);
-        }
-
-        tableModel = new DefaultTableModel(columnNames, 0);
+        
+        tableModel = new DefaultTableModel();
         table = new JTable(tableModel);
-        styleTable();
 
         scrollPane = new JScrollPane(table);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -75,8 +82,24 @@ public class DataTablePanel extends JPanel {
         });
 
         initSouthPanel();
-        setupColumnSelectionListener();
         startAutoDataFeed();
+    }
+    
+    private void initiateDataLogger() {
+    	if(!dataLoggerConfig.isConfigChanged()) {
+    		return;
+    	}
+        Object[] columnNames = dataLoggerConfig.getSelectedMetricParams()
+        		.stream()
+        		.map(metricParam -> metricParam.getName())
+        		.toArray();
+
+        tableModel.setColumnIdentifiers(columnNames);
+        tableModel.setRowCount(0);
+        table.setModel(tableModel);
+        setupColumnSelectionListener();
+        styleTable();
+        dataLoggerConfig.setConfigChanged(false);
     }
 
     private void styleTable() {
@@ -85,6 +108,10 @@ public class DataTablePanel extends JPanel {
         table.setGridColor(Color.GRAY);
         table.setSelectionBackground(Color.DARK_GRAY);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+
+        // Style table header
+        JTableHeader header = table.getTableHeader();
+        header.setFont(new Font("SansSerif", Font.BOLD, 14)); // Bold, larger font
 
         for (int i = 0; i < table.getColumnCount(); i++) {
             TableColumn column = table.getColumnModel().getColumn(i);
@@ -106,17 +133,34 @@ public class DataTablePanel extends JPanel {
         chartPanel.setPreferredSize(new Dimension(800, 300));
         chartPanelContainer = new JPanel(new BorderLayout());
         chartPanelContainer.add(chartPanel, BorderLayout.CENTER);
+        chartPanelContainer.setVisible(isGraphVisible);
         
         // Create button panel
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setBackground(Color.BLACK);
         toggleGraphButton = new JButton(AppIcon.getIcon("/ui/icons/icons8-graph-20.png"));
-        //toggleGraphButton.setBackground(Color.BLACK);
-        //toggleGraphButton.setForeground(Color.GREEN);
-        //toggleGraphButton.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+        toggleGraphButton.setText("Show Graph");
+        toggleDataLoggerButton = new JButton(AppIcon.getIcon("/ui/icons/icons8-start-20.png"));
+        toggleDataLoggerButton.setText("Start");
+        
+        configureButton = new JButton(AppIcon.getIcon("/ui/icons/icons8-configure-20.png"));
+        configureButton.setText("Configure");
+        configureButton.setToolTipText("Configure metric parameters");
+        
+        JButton exportButton = new JButton(AppIcon.getIcon("/ui/icons/icons8-excel-20.png"));
+        exportButton.setText("Export");
+
         toggleGraphButton.setToolTipText("Hide or show the live data graph");
         toggleGraphButton.addActionListener(e -> toggleGraphVisibility());
+        toggleDataLoggerButton.addActionListener(e -> toggleDataLogger());
+        configureButton.addActionListener(e -> {
+        	ConfigurationDialog.showDialog(homePage);
+        	initiateDataLogger();
+        });
+        
         buttonPanel.add(toggleGraphButton);
+        buttonPanel.add(toggleDataLoggerButton);
+        buttonPanel.add(configureButton);
+        buttonPanel.add(exportButton);
 
         // Add components to south panel
         southPanel.add(buttonPanel, BorderLayout.NORTH);
@@ -132,10 +176,22 @@ public class DataTablePanel extends JPanel {
         toggleGraphButton.setText(isGraphVisible ? "Remove Graph" : "Show Graph");
         toggleGraphButton.setIcon(AppIcon.getIcon("/ui/icons/icons8-graph-20.png"));
         logger.debug("Graph visibility toggled to: {}", isGraphVisible);
-        // Revalidate and repaint to ensure layout updates
         revalidate();
         repaint();
     }
+    
+	private void toggleDataLogger() {
+		initiateDataLogger();
+		isDataLoggerStarted = !isDataLoggerStarted;
+		toggleDataLoggerButton.setText(isDataLoggerStarted ? "stop" : "start");
+		if (isDataLoggerStarted) {
+			toggleDataLoggerButton.setIcon(AppIcon.getIcon("/ui/icons/icons8-stop-20.png"));
+		} else {
+			toggleDataLoggerButton.setIcon(AppIcon.getIcon("/ui/icons/icons8-start-20.png"));
+		}
+		revalidate();
+		repaint();
+	}
 
     private void setupColumnSelectionListener() {
         table.getColumnModel().getSelectionModel().addListSelectionListener(new ListSelectionListener() {

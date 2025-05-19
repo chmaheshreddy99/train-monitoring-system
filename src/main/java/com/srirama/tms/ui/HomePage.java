@@ -1,6 +1,7 @@
 package com.srirama.tms.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -9,20 +10,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.srirama.tms.listener.UdpPacketListener;
-import com.srirama.tms.ui.components.CardPanel;
+import com.srirama.tms.ui.components.DataTablePanel;
 import com.srirama.tms.ui.components.FooterPanel;
 import com.srirama.tms.ui.components.HeaderPanel;
 import com.srirama.tms.ui.components.MenuBarBuilder;
-import com.srirama.tms.ui.components.SidePanel;
 
 @Component
 public class HomePage extends JFrame {
 
     private static final long serialVersionUID = 2696909680742711072L;
-    private CardPanel cardPanel;
     
     @Autowired
     private UdpPacketListener udpListener;
+    
+    private DataTablePanel dataTablePanel;
     
     public void init() {
         initializeFrame();
@@ -40,17 +41,16 @@ public class HomePage extends JFrame {
 
     private void initializeComponents() {
         setJMenuBar(MenuBarBuilder.buildMenuBar(this));
-
-        cardPanel = new CardPanel();
-
-        SidePanel sidePanel = new SidePanel(cardPanel);
+        
+        dataTablePanel = new DataTablePanel();
 
         add(new HeaderPanel(), BorderLayout.NORTH);
         add(new FooterPanel(), BorderLayout.SOUTH);
 
         JPanel centerPanel = new JPanel(new BorderLayout());
-        centerPanel.add(cardPanel, BorderLayout.CENTER);
-        centerPanel.add(sidePanel, BorderLayout.EAST);	
+        centerPanel.add(dataTablePanel, BorderLayout.CENTER);
+        centerPanel.setBackground(Color.BLACK);
+
 
         add(centerPanel, BorderLayout.CENTER);
     }

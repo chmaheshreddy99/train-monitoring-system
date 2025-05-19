@@ -38,6 +38,7 @@ public class MetricService {
 	        .map(metric -> {
 	            MetricParameterPreferences preference = new MetricParameterPreferences();
 	            preference.setName(preferenceName);
+	            preference.setDescription(preferenceName);
 	            preference.setMetricParameterName(metric.getName());
 	            preference.setMetricGroupName(metric.getGroupName());
 	            return preference;
