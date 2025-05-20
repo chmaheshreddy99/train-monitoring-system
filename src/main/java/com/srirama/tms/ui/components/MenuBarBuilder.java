@@ -42,7 +42,7 @@ public class MenuBarBuilder {
     	JMenuItem configure = new JMenuItem("Configure", AppIcon.getIcon("/ui/icons/icons8-configuration-20.png"));
 
         configure.addActionListener(e -> {
-            ConfigurationDialog.showDialog(parent);
+            ConfigurationDialog.showDialog(parent, null);
         });
 
         return configure;

@@ -38,7 +38,7 @@ public class HomePage extends JFrame {
     private void initializeFrame() {
         setTitle("Train Monitoring System.");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1378, 768);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
     }

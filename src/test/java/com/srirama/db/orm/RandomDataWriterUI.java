@@ -2,19 +2,14 @@ package com.srirama.db.orm;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.GridLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardWatchEventKinds;
-import java.nio.file.WatchEvent;
-import java.nio.file.WatchKey;
-import java.nio.file.WatchService;
 import java.text.SimpleDateFormat;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -23,6 +18,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -31,32 +27,32 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSlider;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
 public class RandomDataWriterUI extends JFrame {
-
-    private static final long serialVersionUID = 1L;
-
-    private JTextField filePathField;
+	private static final long serialVersionUID = -7829580570365602219L;
+	private JTextField filePathField;
     private JTextField descriptorFileField;
-    private JTextField frequencyField;
+    private JTextArea descriptorInputArea;
     private JTextArea dataLogger;
-    private JButton startButton;
-    private JButton stopButton;
+    private JButton toggleButton;
+    private JSlider frequencySlider;
+    private JLabel frequencyLabel;
 
     private volatile boolean running = false;
     private Thread writerThread;
-    private Thread descriptorWatcherThread;
 
     private final List<DataDescriptor> descriptors = new CopyOnWriteArrayList<>();
     private final Random random = new Random();
+    private volatile int frequency = 1000;
 
     public RandomDataWriterUI() {
-        setTitle("Random Data File Writer with Descriptor");
-        setSize(800, 600);
+        setTitle("Random Data File Writer");
+        setSize(850, 700);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         initUI();
     }
@@ -64,71 +60,110 @@ public class RandomDataWriterUI extends JFrame {
     private void initUI() {
         setLayout(new BorderLayout());
 
-        JPanel formPanel = new JPanel(new GridLayout(4, 2, 10, 10));
-        formPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        JPanel formPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        filePathField = new JTextField("data.txt");
-        descriptorFileField = new JTextField("descriptor.txt");
-        frequencyField = new JTextField("1000");
+        filePathField = new JTextField("data.txt", 30);
+        descriptorFileField = new JTextField("descriptor.txt", 30);
 
-        formPanel.add(new JLabel("Output File Path:"));
-        formPanel.add(filePathField);
-        formPanel.add(new JLabel("Descriptor File Path:"));
-        formPanel.add(descriptorFileField);
-        formPanel.add(new JLabel("Write Frequency (ms):"));
-        formPanel.add(frequencyField);
+        descriptorInputArea = new JTextArea(4, 30);
+        descriptorInputArea.setLineWrap(true);
+        descriptorInputArea.setWrapStyleWord(true);
+        JScrollPane descScrollPane = new JScrollPane(descriptorInputArea);
+        descScrollPane.setBorder(BorderFactory.createTitledBorder("Custom Descriptor (optional)"));
 
-        startButton = new JButton("Start");
-        stopButton = new JButton("Stop");
-        stopButton.setEnabled(false);
-        formPanel.add(startButton);
-        formPanel.add(stopButton);
+        frequencySlider = new JSlider(10, 5000, 32);
+        frequencyLabel = new JLabel("Write Frequency: " + frequencySlider.getValue() + "ms");
+        frequencySlider.setMajorTickSpacing(1000);
+        frequencySlider.setMinorTickSpacing(100);
+        frequencySlider.setPaintTicks(true);
+        frequencySlider.setPaintLabels(true);
+        frequencySlider.addChangeListener(e -> {
+            frequency = frequencySlider.getValue();
+            frequencyLabel.setText("Write Frequency: " + frequency + " ms");
+        });
+
+        toggleButton = new JButton("Start");
+        toggleButton.addActionListener(this::toggleWriter);
+
+        gbc.gridx = 0; gbc.gridy = 0;
+        formPanel.add(new JLabel("Output File Path:"), gbc);
+        gbc.gridx = 1;
+        formPanel.add(filePathField, gbc);
+
+        gbc.gridx = 0; gbc.gridy++;
+        formPanel.add(new JLabel("Descriptor File Path:"), gbc);
+        gbc.gridx = 1;
+        formPanel.add(descriptorFileField, gbc);
+
+        gbc.gridx = 0; gbc.gridy++;
+        formPanel.add(frequencyLabel, gbc);
+        gbc.gridx = 1;
+        formPanel.add(frequencySlider, gbc);
+
+        gbc.gridx = 0; gbc.gridy++;
+        gbc.gridwidth = 2;
+        formPanel.add(descScrollPane, gbc);
+
+        gbc.gridy++;
+        formPanel.add(toggleButton, gbc);
 
         dataLogger = new JTextArea();
         dataLogger.setEditable(false);
         dataLogger.setBackground(Color.BLACK);
         dataLogger.setForeground(Color.GREEN);
-        JScrollPane scrollPane = new JScrollPane(dataLogger);
+        JScrollPane logScrollPane = new JScrollPane(dataLogger);
 
         add(formPanel, BorderLayout.NORTH);
-        add(scrollPane, BorderLayout.CENTER);
-
-        startButton.addActionListener(this::startWriting);
-        stopButton.addActionListener(e -> stopWriting());
+        add(logScrollPane, BorderLayout.CENTER);
     }
 
-    private void startWriting(ActionEvent e) {
+    private void toggleWriter(ActionEvent e) {
+        if (!running) {
+            startWriting();
+        } else {
+            stopWriting();
+        }
+    }
+
+    private void startWriting() {
         String filePath = filePathField.getText().trim();
         String descriptorPath = descriptorFileField.getText().trim();
-        int frequency;
+        File outputFile = new File(filePath);
+
+        String descriptorInput = descriptorInputArea.getText().trim();
+        descriptors.clear();
 
         try {
-            frequency = Integer.parseInt(frequencyField.getText().trim());
-            if (frequency <= 0) throw new NumberFormatException();
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Invalid frequency input");
+            if (!descriptorInput.isEmpty()) {
+                String[] tokens = descriptorInput.split("\\|");
+                for (String token : tokens) {
+                    descriptors.add(DataDescriptor.parse(token.trim()));
+                }
+            } else {
+                File descriptorFile = new File(descriptorPath);
+                if (!descriptorFile.exists()) {
+                    JOptionPane.showMessageDialog(this, "Descriptor file not found.");
+                    return;
+                }
+                List<String> lines = Files.readAllLines(descriptorFile.toPath());
+                if (!lines.isEmpty()) {
+                    String[] tokens = lines.get(0).split("\\|");
+                    for (String token : tokens) {
+                        descriptors.add(DataDescriptor.parse(token.trim()));
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error loading descriptors: " + ex.getMessage());
             return;
         }
-
-        File outputFile = new File(filePath);
-        File descriptorFile = new File(descriptorPath);
-
-        if (!descriptorFile.exists()) {
-            JOptionPane.showMessageDialog(this, "Descriptor file does not exist.");
-            return;
-        }
-
-        loadDescriptors(descriptorFile);
 
         running = true;
-        startButton.setEnabled(false);
-        stopButton.setEnabled(true);
+        toggleButton.setText("Stop");
 
-        // Start descriptor watcher thread
-        descriptorWatcherThread = new Thread(() -> watchDescriptorFile(descriptorFile));
-        descriptorWatcherThread.start();
-
-        // Start writer thread
         writerThread = new Thread(() -> {
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile, true))) {
                 while (running) {
@@ -153,73 +188,27 @@ public class RandomDataWriterUI extends JFrame {
 
     private void stopWriting() {
         running = false;
-        stopButton.setEnabled(false);
-        startButton.setEnabled(true);
+        toggleButton.setText("Start");
         if (writerThread != null) writerThread.interrupt();
-        if (descriptorWatcherThread != null) descriptorWatcherThread.interrupt();
-    }
-
-    private void loadDescriptors(File descriptorFile) {
-        try {
-            List<String> lines = Files.readAllLines(descriptorFile.toPath());
-            if (lines.isEmpty()) return;
-            String[] tokens = lines.get(0).split("\\|");
-
-            descriptors.clear();
-            for (String token : tokens) {
-                descriptors.add(DataDescriptor.parse(token.trim()));
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void watchDescriptorFile(File descriptorFile) {
-        try {
-            Path path = descriptorFile.toPath().getParent();
-            WatchService watchService = FileSystems.getDefault().newWatchService();
-            path.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY);
-
-            while (running) {
-                WatchKey key = watchService.take(); // blocking
-                for (WatchEvent<?> event : key.pollEvents()) {
-                    Path changed = (Path) event.context();
-                    if (descriptorFile.toPath().getFileName().equals(changed)) {
-                        loadDescriptors(descriptorFile);
-                        SwingUtilities.invokeLater(() -> {
-                            dataLogger.append("[Descriptor Updated]\n");
-                        });
-                    }
-                }
-                key.reset();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     private String generateRandomLine() {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < descriptors.size(); i++) {
-            sb.append(descriptors.get(i).generate(random));
-            if (i < descriptors.size() - 1) sb.append("|");
-        }
-        return sb.toString();
+        return descriptors.stream()
+                .map(d -> d.generate(random))
+                .collect(Collectors.joining("|"));
     }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-			try {
-				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-			} catch (Exception ex) {
-				ex.printStackTrace();
-			}
-			new RandomDataWriterUI().setVisible(true);
-		});
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            new RandomDataWriterUI().setVisible(true);
+        });
     }
 
-    // Helper class to represent a data descriptor
     static class DataDescriptor {
         enum Type { DATE, TIME, DOUBLE, STRING }
 
@@ -228,7 +217,6 @@ public class RandomDataWriterUI extends JFrame {
         List<String> stringValues;
 
         public static DataDescriptor parse(String token) {
-            token = token.trim();
             if (token.equalsIgnoreCase("Date")) {
                 DataDescriptor d = new DataDescriptor();
                 d.type = Type.DATE;
@@ -240,16 +228,11 @@ public class RandomDataWriterUI extends JFrame {
             } else if (token.startsWith("Double")) {
                 DataDescriptor d = new DataDescriptor();
                 d.type = Type.DOUBLE;
+                d.min = 0; d.max = 1000;
                 if (token.contains(",")) {
-                    String[] parts = token.replaceAll("[<>]", "").split(",");
-                    if (parts.length == 2) {
-                        String[] range = parts[1].split("-");
-                        d.min = Double.parseDouble(range[0]);
-                        d.max = Double.parseDouble(range[1]);
-                    }
-                } else {
-                    d.min = 0;
-                    d.max = 1000;
+                    String[] range = token.replaceAll("[<>]", "").split(",")[1].split("-");
+                    d.min = Double.parseDouble(range[0]);
+                    d.max = Double.parseDouble(range[1]);
                 }
                 return d;
             } else if (token.startsWith("String")) {
@@ -271,18 +254,12 @@ public class RandomDataWriterUI extends JFrame {
         }
 
         public String generate(Random random) {
-            switch (type) {
-                case DATE:
-                    return new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-                case TIME:
-                    return LocalTime.now().withNano(0).toString();
-                case DOUBLE:
-                    return String.format("%.2f", min + (max - min) * random.nextDouble());
-                case STRING:
-                    return stringValues.get(random.nextInt(stringValues.size()));
-                default:
-                    return "";
-            }
+            return switch (type) {
+                case DATE -> new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+                case TIME -> LocalTime.now().withNano(0).toString();
+                case DOUBLE -> String.format("%.2f", min + (max - min) * random.nextDouble());
+                case STRING -> stringValues.get(random.nextInt(stringValues.size()));
+            };
         }
     }
 }

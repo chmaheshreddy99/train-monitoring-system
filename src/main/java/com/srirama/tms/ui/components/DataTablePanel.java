@@ -4,6 +4,9 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -40,7 +43,6 @@ public class DataTablePanel extends JPanel {
     private DefaultTableModel tableModel;
     private JScrollPane scrollPane;
     private boolean isUserAdjustingVerticalScrollBar = false;
-    private static final int COLUMN_WIDTH_PIXELS = 113;
     private static final int MAX_DATA_POINTS = 1000;
 
     @Autowired
@@ -71,7 +73,6 @@ public class DataTablePanel extends JPanel {
         
         tableModel = new DefaultTableModel();
         table = new JTable(tableModel);
-
         scrollPane = new JScrollPane(table);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         add(scrollPane, BorderLayout.CENTER);
@@ -80,6 +81,15 @@ public class DataTablePanel extends JPanel {
         verticalScrollBar.getModel().addChangeListener((ChangeEvent e) -> {
             isUserAdjustingVerticalScrollBar = verticalScrollBar.getValueIsAdjusting();
         });
+        
+        table.getTableHeader().addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
+                   styleTable();
+                }
+            }
+        });        
 
         initSouthPanel();
         startAutoDataFeed();
@@ -105,20 +115,33 @@ public class DataTablePanel extends JPanel {
     private void styleTable() {
         table.setBackground(Color.BLACK);
         table.setForeground(Color.GREEN);
-        table.setGridColor(Color.GRAY);
+        table.setGridColor(Color.BLACK);
         table.setSelectionBackground(Color.DARK_GRAY);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-
-        // Style table header
         JTableHeader header = table.getTableHeader();
-        header.setFont(new Font("SansSerif", Font.BOLD, 14)); // Bold, larger font
-
-        for (int i = 0; i < table.getColumnCount(); i++) {
-            TableColumn column = table.getColumnModel().getColumn(i);
-            column.setPreferredWidth(COLUMN_WIDTH_PIXELS);
-            column.setWidth(COLUMN_WIDTH_PIXELS);
+        header.setFont(new Font("SansSerif", Font.BOLD, 14));
+        FontMetrics headerFontMetrics = header.getFontMetrics(header.getFont());
+        FontMetrics cellFontMetrics = table.getFontMetrics(table.getFont());
+        int padding = 20;
+        int minWidth = 80;
+        for (int col = 0; col < table.getColumnCount(); col++) {
+            TableColumn column = table.getColumnModel().getColumn(col);
+            String headerText = table.getColumnName(col);
+            int headerWidth = headerFontMetrics.stringWidth(headerText);
+            int maxCellWidth = 0;
+            for (int row = 0; row < table.getRowCount(); row++) {
+                Object value = table.getValueAt(row, col);
+                if (value != null) {
+                    int cellWidth = cellFontMetrics.stringWidth(value.toString());
+                    maxCellWidth = Math.max(maxCellWidth, cellWidth);
+                }
+            }
+            int preferredWidth = Math.max(minWidth, Math.max(headerWidth, maxCellWidth) + padding);
+            column.setPreferredWidth(preferredWidth);
         }
     }
+
+
 
     private void initSouthPanel() {
         JPanel southPanel = new JPanel(new BorderLayout());
@@ -151,8 +174,7 @@ public class DataTablePanel extends JPanel {
         toggleGraphButton.addActionListener(e -> toggleGraphVisibility());
         toggleDataLoggerButton.addActionListener(e -> toggleDataLogger());
         configureButton.addActionListener(e -> {
-        	ConfigurationDialog.showDialog(homePage);
-        	initiateDataLogger();
+        	ConfigurationDialog.showDialog(homePage, this::initiateDataLogger);
         });
         
         buttonPanel.add(toggleGraphButton);
@@ -207,7 +229,6 @@ public class DataTablePanel extends JPanel {
 
     private void addRow(Object[] rowData) {
         tableModel.addRow(rowData);
-
         for (int colIndex : selectedColumns) {
             if (colIndex < rowData.length) {
                 try {
@@ -226,12 +247,12 @@ public class DataTablePanel extends JPanel {
         updateChart();
 
         if (!isUserAdjustingVerticalScrollBar) {
-            scrollToBottom();
+        	SwingUtilities.invokeLater(() -> scrollToBottom());
         }
     }
 
     private void updateChart() {
-        if (!isGraphVisible) return; // Skip chart updates if graph is hidden
+        if (!isGraphVisible) return;
         dataset.clear();
         for (int col : selectedColumns) {
             List<Double> values = columnDataMap.getOrDefault(col, List.of());

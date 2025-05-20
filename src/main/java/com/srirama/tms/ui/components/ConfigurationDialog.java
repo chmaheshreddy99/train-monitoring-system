@@ -18,6 +18,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTree;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
@@ -40,6 +41,7 @@ public class ConfigurationDialog extends JDialog {
     private DefaultTreeModel treeModel;
     private DefaultMutableTreeNode rootNode;
     private DefaultListModel<String> savedConfigurationsModel;
+    private Runnable callBack;
     
     @Autowired
     private MetricService metricService;
@@ -52,20 +54,18 @@ public class ConfigurationDialog extends JDialog {
         SpringBeanInjector.inject(this);
         initUI();
     }
+    
+	public void setCallBack(Runnable callBack) {
+		this.callBack = callBack;
+	}
 
-    private void initUI() {
-        setSize(900, 600);
-        setLocationRelativeTo(getParent());
-
+	private void initUI() {
         selectedModel = new DefaultListModel<>();
         selectedList = new JList<>(selectedModel);
         savedConfigurationsModel = new DefaultListModel<>();
 
         JSplitPane innerSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, createLeftPane(), createRightPane());
-        innerSplitPane.setDividerLocation(350);
-
         JSplitPane outerSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, createNewLeftPane(), innerSplitPane);
-        outerSplitPane.setDividerLocation(200);
 
         JPanel bottomButtons = new JPanel();
 
@@ -88,6 +88,16 @@ public class ConfigurationDialog extends JDialog {
 
         getContentPane().add(outerSplitPane, BorderLayout.CENTER);
         getContentPane().add(bottomButtons, BorderLayout.SOUTH);
+        
+        SwingUtilities.invokeLater(() -> {
+            // Set proportional locations instead of fixed pixels
+            outerSplitPane.setDividerLocation(0.3); // 20% of frame width
+            innerSplitPane.setDividerLocation(0.55); // 40% of remaining space
+        });
+        
+        pack();  // Sizes to fit content
+        setLocationRelativeTo(getParent());
+
 
     }
     
@@ -251,11 +261,19 @@ public class ConfigurationDialog extends JDialog {
 		progressDialog.startBackgroundTask(() -> metricService.send(selectedParameters));
 		dataLoggerConfig.setSelectedMetricParams(selectedParameters);
 		dataLoggerConfig.setConfigChanged(true);
+		executeCallback();
 	}
 
-    public static void showDialog(Frame parent) {
+    public static void showDialog(Frame parent, Runnable callback) {
         ConfigurationDialog dialog = new ConfigurationDialog(parent);
+        dialog.setCallBack(callback);
         dialog.setVisible(true);
+    }
+    
+    private void executeCallback() {
+    	if(callBack != null) {
+    		callBack.run();
+    	}
     }
 
 }
