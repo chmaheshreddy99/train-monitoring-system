@@ -1,17 +1,20 @@
 package com.srirama.tms.listener;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import com.srirama.tms.DataConstants;
+
+import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
-@Component
+@Component(DataConstants.UDP_DATA_LISTENER)
 public class UdpPacketListener {
 
     @Value("${udp.listener.port:9002}")

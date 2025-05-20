@@ -1,10 +1,12 @@
 package com.srirama.tms.service;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.srirama.tms.connector.FileMessageSender;
 import com.srirama.tms.entity.MetricParameter;
 import com.srirama.tms.entity.MetricParameterPreferences;
 import com.srirama.tms.respository.MetricParameterPreferencesRepository;
@@ -18,6 +20,9 @@ public class MetricService {
 
 	@Autowired
 	private MetricParameterPreferencesRepository metricParameterPreferencesRepository;
+	
+	@Autowired
+	private FileMessageSender messageSender;
 
 	public List<MetricParameter> getMetricParams() {
 		return metricParameterRepository.findAll();
@@ -49,14 +54,17 @@ public class MetricService {
 	}
 	
 	public boolean send(List<MetricParameter> metricParameters) {
+		String message = "";
+		for (MetricParameter param : metricParameters) {
+			message = message + param.getDataType() + "|";
+		}
 		try {
-			Thread.sleep(5000);
-			return true;
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
+			messageSender.writeMessage(message);
+		} catch (IOException e) {
 			e.printStackTrace();
 			return false;
 		}
+		return true;
 	}
 	
 	public List<String> getAllConfigNames() {
@@ -72,6 +80,7 @@ public class MetricService {
 		return metricParameterPreferencesRepository.findByPreferenceName(configName)
 				.stream()
 				.map(metricParam -> metricParameterRepository.findById(metricParam.getMetricParameterName()))
+				.distinct()
 				.toList();
 	}
 }

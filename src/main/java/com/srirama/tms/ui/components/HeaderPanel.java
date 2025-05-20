@@ -2,6 +2,7 @@ package com.srirama.tms.ui.components;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 
@@ -9,18 +10,31 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.srirama.tms.dependencyijnection.SpringBeanInjector;
+import com.srirama.tms.ui.HomePage;
+
 public class HeaderPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
+    
+    @Autowired
+    private HomePage homePage;
 
     public HeaderPanel() {
+    	SpringBeanInjector.inject(this);
         setLayout(new BorderLayout());
         setBackground(new Color(58, 104, 168));
-        setPreferredSize(new Dimension(0, 45));
+        setPreferredSize(new Dimension(0, 40));
 
         JLabel title = new JLabel("TRAIN MONITORING SYSTEM", SwingConstants.CENTER);
         title.setForeground(Color.WHITE);
         title.setFont(new Font("SansSerif", Font.BOLD, 22));
+        JLabel home = new JLabel(AppIcon.getIcon("/ui/icons/icons8-technology-48.png"));
+        home.setText("Home");
+        home.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        add(home, BorderLayout.WEST);
         add(title, BorderLayout.CENTER);
     }
 }

@@ -17,7 +17,7 @@ public class ProgressDialog extends JDialog {
 	private static final long serialVersionUID = -5886801144327713608L;
 	private final JProgressBar progressBar;
     private final JLabel statusLabel;
-    private boolean autoDispose;
+    private boolean autoDispose = true;
 
     public ProgressDialog(JDialog parent, String title) {
         super(parent, title, true);

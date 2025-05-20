@@ -121,9 +121,7 @@ public class DataTablePanel extends JPanel {
     }
 
     private void initSouthPanel() {
-        // Create south panel to hold button and chart
         JPanel southPanel = new JPanel(new BorderLayout());
-        // Initialize chart
         dataset = new DefaultCategoryDataset();
         chart = ChartFactory.createLineChart(
             "Live Data Graph", "Time", "Value", dataset,
@@ -162,11 +160,9 @@ public class DataTablePanel extends JPanel {
         buttonPanel.add(configureButton);
         buttonPanel.add(exportButton);
 
-        // Add components to south panel
         southPanel.add(buttonPanel, BorderLayout.NORTH);
         southPanel.add(chartPanelContainer, BorderLayout.CENTER);
 
-        // Add south panel to main panel
         add(southPanel, BorderLayout.SOUTH);
     }
 
@@ -183,7 +179,7 @@ public class DataTablePanel extends JPanel {
 	private void toggleDataLogger() {
 		initiateDataLogger();
 		isDataLoggerStarted = !isDataLoggerStarted;
-		toggleDataLoggerButton.setText(isDataLoggerStarted ? "stop" : "start");
+		toggleDataLoggerButton.setText(isDataLoggerStarted ? "Stop" : "Start");
 		if (isDataLoggerStarted) {
 			toggleDataLoggerButton.setIcon(AppIcon.getIcon("/ui/icons/icons8-stop-20.png"));
 		} else {

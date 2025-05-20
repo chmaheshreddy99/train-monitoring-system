@@ -70,13 +70,13 @@ public class ConfigurationDialog extends JDialog {
         JPanel bottomButtons = new JPanel();
 
         JButton saveButton = new JButton(AppIcon.getIcon("/ui/icons/icons8-save-20.png"));
-        saveButton.setToolTipText("Save");
+        saveButton.setText("Save");
         
         JButton cancelButton = new JButton(AppIcon.getIcon("/ui/icons/icons8-exit-20.png"));
-        cancelButton.setToolTipText("Cancel");
+        cancelButton.setText("Cancel");
         
-        JButton sendButton = new JButton(AppIcon.getIcon("/ui/icons/icons8-ic-20.png"));
-        sendButton.setToolTipText("Send");
+        JButton sendButton = new JButton(AppIcon.getIcon("/ui/icons/icons8-send-20.png"));
+        sendButton.setText("Send");
 
         saveButton.addActionListener(e -> onSave());
         sendButton.addActionListener(e -> onSend());

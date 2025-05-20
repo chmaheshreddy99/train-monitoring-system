@@ -9,7 +9,7 @@ import java.net.SocketException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-public class UDPListener {
+public class UDPListener implements DataListener<String> {
 
 	private static final Logger logger = LoggerFactory.getLogger(UDPListener.class);
 
