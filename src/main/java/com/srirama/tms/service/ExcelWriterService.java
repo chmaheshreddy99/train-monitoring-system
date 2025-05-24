@@ -29,6 +29,8 @@ public class ExcelWriterService {
 	@Value("${export.maxBufferSize:4096}")
 	private int maxBufferSize;
 	
+	private Runnable callback;
+	
 	public ExcelWriterService() {
 		this.buffer = new ArrayList<>();
 	}
@@ -71,5 +73,14 @@ public class ExcelWriterService {
 				e.printStackTrace();
 			}
 		}
+		if(callback != null) {
+			callback.run();
+		}
 	}
+
+	public void setCallback(Runnable callback) {
+		this.callback = callback;
+	}
+	
+	
 }

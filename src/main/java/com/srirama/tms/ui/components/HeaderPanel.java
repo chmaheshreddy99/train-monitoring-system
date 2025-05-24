@@ -10,17 +10,11 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
 import com.srirama.tms.dependencyijnection.SpringBeanInjector;
-import com.srirama.tms.ui.HomePage;
 
 public class HeaderPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
-    
-    @Autowired
-    private HomePage homePage;
 
     public HeaderPanel() {
     	SpringBeanInjector.inject(this);
@@ -28,7 +22,7 @@ public class HeaderPanel extends JPanel {
         setBackground(new Color(58, 104, 168));
         setPreferredSize(new Dimension(0, 40));
 
-        JLabel title = new JLabel("TRAIN MONITORING SYSTEM", SwingConstants.CENTER);
+        JLabel title = new JLabel("RailLogix", SwingConstants.CENTER);
         title.setForeground(Color.WHITE);
         title.setFont(new Font("SansSerif", Font.BOLD, 22));
         JLabel home = new JLabel(AppIcon.getIcon("/ui/icons/icons8-technology-48.png"));

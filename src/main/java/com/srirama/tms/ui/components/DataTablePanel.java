@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.srirama.tms.config.DataLoggerConfig;
 import com.srirama.tms.dependencyijnection.SpringBeanInjector;
 import com.srirama.tms.service.DataConsumerService;
+import com.srirama.tms.service.ExcelWriterService;
 import com.srirama.tms.ui.HomePage;
 
 public class DataTablePanel extends JPanel {
@@ -53,6 +54,9 @@ public class DataTablePanel extends JPanel {
     
     @Autowired
     private HomePage homePage;
+    
+    @Autowired
+    private ExcelWriterService excelWriterService;
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
@@ -70,7 +74,7 @@ public class DataTablePanel extends JPanel {
     public DataTablePanel() {
         SpringBeanInjector.inject(this);
         setLayout(new BorderLayout());
-        
+        excelWriterService.setCallback(this::dataFlushedToExcel);
         tableModel = new DefaultTableModel();
         table = new JTable(tableModel);
         scrollPane = new JScrollPane(table);
@@ -93,6 +97,10 @@ public class DataTablePanel extends JPanel {
 
         initSouthPanel();
         startAutoDataFeed();
+    }
+    
+    private void dataFlushedToExcel() {
+    	tableModel.getDataVector().clear();
     }
     
     private void initiateDataLogger() {
@@ -268,7 +276,7 @@ public class DataTablePanel extends JPanel {
     }
 
     private void startAutoDataFeed() {
-        Timer timer = new Timer(200, e -> fetchAndAddRowAsync());
+        Timer timer = new Timer(10, e -> fetchAndAddRowAsync());
         timer.start();
     }
 
@@ -278,8 +286,9 @@ public class DataTablePanel extends JPanel {
                 String[] data = dataConsumerService.fetchData();
                 if (data != null && data.length > 0) {
                     for (String t : data) {
-                        Object[] rowData = t.split("\\|");
+                        String[] rowData = t.split("\\|");
                         SwingUtilities.invokeLater(() -> addRow(rowData));
+                        excelWriterService.addRow(Arrays.asList(rowData));
                     }
                 }
             } catch (Exception ex) {

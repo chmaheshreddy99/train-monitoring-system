@@ -36,7 +36,7 @@ public class HomePage extends JFrame {
     }
 
     private void initializeFrame() {
-        setTitle("Train Monitoring System.");
+        setTitle("RailLogix");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setLocationRelativeTo(null);

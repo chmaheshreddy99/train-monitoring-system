@@ -73,7 +73,14 @@ public class SaveConfigurationDialog extends JDialog {
 	private void showResult(boolean success) {
 		System.out.println("submit callback.....");
 		statusLabel =  new JLabel();
-		statusLabel.setText(success ? "✅ Configuration saved successfully!" : "❌ Unable to save configuration!");
+        if(success) {
+        	statusLabel.setIcon(AppIcon.getIcon("/ui/icons/icons8-success-20.png"));
+        	statusLabel.setText("Successfully configured the parameters.");
+        }
+        else {
+        	statusLabel.setIcon(AppIcon.getIcon("/ui/icons/icons8-error-20.png"));
+        	statusLabel.setText("Parameter configuration failed.");
+        }
 		getContentPane().removeAll();
 		statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		getContentPane().setLayout(new BorderLayout());

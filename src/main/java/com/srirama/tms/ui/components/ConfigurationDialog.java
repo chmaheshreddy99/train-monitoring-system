@@ -63,6 +63,7 @@ public class ConfigurationDialog extends JDialog {
         selectedModel = new DefaultListModel<>();
         selectedList = new JList<>(selectedModel);
         savedConfigurationsModel = new DefaultListModel<>();
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
         JSplitPane innerSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, createLeftPane(), createRightPane());
         JSplitPane outerSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, createNewLeftPane(), innerSplitPane);

@@ -57,7 +57,14 @@ public class ProgressDialog extends JDialog {
     private void showResult(boolean success) {
         progressBar.setIndeterminate(false);
         progressBar.setVisible(false);
-        statusLabel.setText(success ? "✅ Operation successful!" : "❌ Operation failed.");
+        if(success) {
+        	statusLabel.setIcon(AppIcon.getIcon("/ui/icons/icons8-success-20.png"));
+        	statusLabel.setText("Successfully configured the parameters.");
+        }
+        else {
+        	statusLabel.setIcon(AppIcon.getIcon("/ui/icons/icons8-error-20.png"));
+        	statusLabel.setText("Parameter configuration failed.");
+        }
         autoDispose();
     }
     

@@ -1,7 +1,6 @@
 package com.srirama.db.entity;
 
 import java.util.LinkedHashMap;
-import java.util.Map;
 
 public class TableSchema {
     private final String tableName;

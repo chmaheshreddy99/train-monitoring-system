@@ -1,9 +1,10 @@
 plugins {
     id 'java'
+    id 'application'
 }
 
 group = 'com.srirama.tms'
-version = '1.0-SNAPSHOT'
+version = '1.0.0'  // use semantic versioning
 
 sourceCompatibility = '17'
 
@@ -11,21 +12,71 @@ repositories {
     mavenCentral()
 }
 
+application {
+    mainClass = 'com.srirama.tms.Application'
+}
+
+jar {
+    manifest {
+        attributes(
+            'Main-Class': application.mainClass.get()
+        )
+    }
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    archiveBaseName.set("RailLogix")
+    archiveVersion.set("")
+}
+
 dependencies {
     implementation 'org.springframework:spring-context:6.1.5'
-    
     implementation 'org.slf4j:slf4j-api:2.0.9'
     implementation 'ch.qos.logback:logback-classic:1.4.11'
-    
     implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
-    
     implementation 'org.jfree:jfreechart:1.5.4'
-    
     implementation 'org.apache.poi:poi:5.2.5'
     implementation 'org.apache.poi:poi-ooxml:5.2.5'
-    
     implementation 'com.fazecast:jSerialComm:2.9.3'
-    
+
     compileOnly 'org.projectlombok:lombok:1.18.30'
     annotationProcessor 'org.projectlombok:lombok:1.18.30'
+}
+
+def jpackageOutputDir = "${buildDir}/jpackage"
+
+task createInstaller(type: Exec) {
+    group = "distribution"
+    description = "Creates a platform-specific installer using jpackage"
+    dependsOn build
+
+    doFirst {
+        mkdir jpackageOutputDir
+    }
+
+    def jpackageExe = "${System.properties['java.home']}/bin/jpackage"
+    def os = org.gradle.internal.os.OperatingSystem.current()
+    def type = os.windows ? "msi" : (os.macOsX ? "pkg" : "deb")
+
+    commandLine = [
+        jpackageExe,
+        '--type', type,
+        '--input', 'build/libs',
+        '--dest', jpackageOutputDir,
+        '--name', 'RailLogix',
+        '--main-jar', jar.archiveFileName.get(),
+        '--main-class', application.mainClass.get(),
+        '--vendor', 'Sriram Aditya IT Solutions Pvt Ltd.',
+        '--app-version', version,
+        '--icon', 'src/main/resources/ui/icons/rail-logix.ico',
+    ]
+
+    if (os.windows) {
+        commandLine += ['--win-dir-chooser', '--win-shortcut', '--win-menu']
+    } else if (os.macOsX) {
+        commandLine += ['--mac-package-identifier', 'com.srirama.tms']
+    } else if (os.linux) {
+        commandLine += ['--linux-shortcut']
+    }
 }
